@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>用 AI 十倍提升学习效率</title>
+<style>
+:root {
+  --bg: #10131c;
+  --card: #1a1f2e;
+  --ink: #e7ebf3;
+  --muted: #9aa3b5;
+  --accent: #6c8cff;
+  --accent2: #ff9f43;
+  --code-bg: #0c0f17;
+  --cover-bg: linear-gradient(135deg,#0d1220 0%,#3b5bdb 100%);
+  --cover-ink: #ffffff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
+  overflow: hidden;
+}
+.slide {
+  display: none;
+  position: absolute; inset: 0;
+  padding: 6vh 7vw;
+  flex-direction: column;
+  justify-content: flex-start;
+  animation: fadein .35s ease;
+}
+.slide.active { display: flex; }
+@keyframes fadein { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+/* 封面 */
+.cover { background: var(--cover-bg); color: var(--cover-ink); justify-content: center; align-items: flex-start; }
+.cover-box { max-width: 880px; }
+.cover-tag { font-size: 14px; letter-spacing: .35em; opacity: .8; margin-bottom: 2.5vh; }
+.cover-title { font-size: clamp(40px, 7vw, 76px); line-height: 1.15; font-weight: 800; margin-bottom: 3vh; }
+.cover-sub { font-size: clamp(16px, 2.2vw, 22px); opacity: .9; margin-bottom: 6vh; }
+.cover-hint { font-size: 13px; opacity: .55; }
+
+/* 页头 */
+.slide-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3vh; }
+.slide-kicker { font-size: 12px; letter-spacing: .12em; color: var(--muted); text-transform: uppercase; }
+.slide-num { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.slide-title { font-size: clamp(24px, 3.6vw, 40px); font-weight: 700; margin-bottom: 3vh; position: relative; padding-left: 18px; }
+.slide-title::before { content: ""; position: absolute; left: 0; top: .15em; bottom: .15em; width: 6px; border-radius: 3px; background: linear-gradient(var(--accent), var(--accent2)); }
+
+.slide-body { flex: 1; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+ul { list-style: none; }
+li { display: flex; align-items: flex-start; font-size: clamp(16px, 2.4vw, 24px); line-height: 1.5; margin-bottom: 1.6vh; color: var(--ink); }
+li .dot { color: var(--accent); font-weight: 700; margin-right: 12px; min-width: 14px; }
+li.lvl1 { font-size: clamp(14px, 2vw, 20px); margin-left: 28px; color: var(--muted); }
+li.lvl2 { font-size: clamp(13px, 1.8vw, 18px); margin-left: 56px; color: var(--muted); }
+li code { background: var(--code-bg); padding: 1px 7px; border-radius: 5px; font-family: "Cascadia Code", Consolas, monospace; font-size: .9em; }
+
+.split { display: flex; gap: 4vw; align-items: center; height: 100%; }
+.col-left { flex: 1; }
+.col-right { flex: 1; display: flex; flex-direction: column; gap: 2.5vh; justify-content: center; }
+.slide-img img { max-width: 100%; max-height: 46vh; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.18); display: block; margin: 0 auto; }
+
+.code-block { background: var(--code-bg); border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,.14); }
+.code-lang { font-size: 11px; letter-spacing: .1em; color: var(--muted); padding: 8px 16px; border-bottom: 1px solid rgba(128,128,128,.2); text-transform: uppercase; }
+.code-block pre { padding: 16px 18px; overflow: auto; }
+.code-block code { font-family: "Cascadia Code", Consolas, monospace; font-size: clamp(12px, 1.5vw, 15px); line-height: 1.6; color: var(--ink); }
+
+/* 演讲词 */
+.notes { display: none; position: absolute; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.85); color: #fff; padding: 22px 6vw 26px; border-top: 3px solid var(--accent2); }
+.notes-head { font-size: 12px; letter-spacing: .2em; color: var(--accent2); margin-bottom: 8px; }
+.notes-body { font-size: 16px; line-height: 1.6; }
+body.show-notes .notes { display: block; }
+
+/* 进度条 + 控制器 */
+#progress { position: fixed; left: 0; bottom: 0; height: 4px; background: var(--accent); transition: width .25s ease; z-index: 99; }
+#counter { position: fixed; right: 18px; bottom: 10px; font-size: 12px; color: var(--muted); z-index: 99; font-variant-numeric: tabular-nums; }
+#hint { position: fixed; left: 18px; bottom: 10px; font-size: 12px; color: var(--muted); z-index: 99; opacity: .8; }
+
+@media print {
+  body { overflow: visible; background: #fff; }
+  .slide { position: relative; display: block !important; page-break-after: always; padding: 40px; min-height: 100vh; }
+  #progress, #counter, #hint { display: none; }
+}
+</style>
+</head>
+<body>
+
+
+    <section class="slide cover">
+      <div class="cover-box">
+        <div class="cover-tag">SLIDE · FORGE</div>
+        <h1 class="cover-title">用 AI 十倍提升学习效率</h1>
+        <div class="cover-sub">输入主题或大纲 · 锻造出可直接放映的幻灯片</div>
+        <div class="cover-hint">按 → 或 空格键 开始放映 · 按 S 查看演讲词 · 按 F 全屏</div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="1">
+      <header class="slide-head">
+        <span class="slide-kicker">用 AI 十倍提升学习效率</span>
+        <span class="slide-num">01 / 07</span>
+      </header>
+      <h2 class="slide-title">学习很努力，为什么没进步？</h2>
+      <div class="slide-body"><ul><li class="lvl0"><span class="dot">•</span>大量时间花在"找资料"和"抄笔记"上</li><li class="lvl0"><span class="dot">•</span>输入多、输出少：看懂了，但讲不出来</li>        <li class="lvl2"><span class="dot">–</span>被动刷课 = 低效的自我安慰</li><li class="lvl0"><span class="dot">•</span>反馈太慢：作业/问题没人即时解答</li></ul></div>
+      <div class="notes"><div class="notes-head">演讲词</div><div class="notes-body">演讲词：先问大家一个问题——你上周学的知识，现在还能讲清楚多少？我们花了很多时间&quot;学&quot;，却很少花时间&quot;练&quot;和&quot;讲&quot;。这一页想让你意识到：不是不够努力，是方法没跟上工具。</div></div>
+    </section>
+    <section class="slide" data-index="2">
+      <header class="slide-head">
+        <span class="slide-kicker">用 AI 十倍提升学习效率</span>
+        <span class="slide-num">02 / 07</span>
+      </header>
+      <h2 class="slide-title">学习效率低，卡在三个环节</h2>
+      <div class="slide-body"><ul><li class="lvl0"><span class="dot">•</span>理解难：概念抽象，缺少直观解释</li><li class="lvl0"><span class="dot">•</span>记忆难：碎片化信息，看完就忘</li><li class="lvl0"><span class="dot">•</span>应用难：学的东西不知道怎么用</li></ul></div>
+      <div class="notes"><div class="notes-head">演讲词</div><div class="notes-body">演讲词：把低效拆开看，其实就是三个环节卡住了：理解、记忆、应用。AI 恰好能在每一个环节精准补位。下面我们逐个看怎么补。</div></div>
+    </section>
+    <section class="slide" data-index="3">
+      <header class="slide-head">
+        <span class="slide-kicker">用 AI 十倍提升学习效率</span>
+        <span class="slide-num">03 / 07</span>
+      </header>
+      <h2 class="slide-title">让 AI 当你的 1 对 1 私教</h2>
+      <div class="slide-body"><ul><li class="lvl0"><span class="dot">•</span>用"费曼式提问"：让 AI 把概念讲给你听</li><li class="lvl0"><span class="dot">•</span>用"苏格拉底式追问"：让 AI 反过来考你</li><li class="lvl0"><span class="dot">•</span>即时反馈：错了立刻纠正，不用等老师</li></ul></div>
+      <div class="notes"><div class="notes-head">演讲词</div><div class="notes-body">演讲词：第一招，把 AI 当私教。不要让它直接给答案，而是让它解释、追问、出题考你。这样你从&quot;听&quot;变成了&quot;被训练&quot;。</div></div>
+    </section>
+    <section class="slide" data-index="4">
+      <header class="slide-head">
+        <span class="slide-kicker">用 AI 十倍提升学习效率</span>
+        <span class="slide-num">04 / 07</span>
+      </header>
+      <h2 class="slide-title">一个立刻能用的提问模板</h2>
+      <div class="slide-body"><div class="split"><div class="col-left"></div><div class="col-right"><div class="code-block"><div class="code-lang">text</div><pre><code>请用费曼学习法给我讲清楚「{概念}」：
+1. 先用一句话说本质
+2. 再举个生活化的例子
+3. 最后出 3 道题考我，等我回答后点评</code></pre></div></div></div></div>
+      <div class="notes"><div class="notes-head">演讲词</div><div class="notes-body">演讲词：这是今天最实用的一页，可以直接抄走。把概念套进这个模板，AI 就会按&quot;本质→例子→出题&quot;的结构带你学，而不是丢给你一段百科。</div></div>
+    </section>
+    <section class="slide" data-index="5">
+      <header class="slide-head">
+        <span class="slide-kicker">用 AI 十倍提升学习效率</span>
+        <span class="slide-num">05 / 07</span>
+      </header>
+      <h2 class="slide-title">从"学"到"用"：强制输出</h2>
+      <div class="slide-body"><ul><li class="lvl0"><span class="dot">•</span>每学完一个主题，让 AI 出题并写一篇 200 字总结</li><li class="lvl0"><span class="dot">•</span>用"教别人"检验掌握：讲给 AI 听，让它挑错</li><li class="lvl0"><span class="dot">•</span>每周复盘：让 AI 帮你整理本周知识图谱</li></ul></div>
+      <div class="notes"><div class="notes-head">演讲词</div><div class="notes-body">演讲词：只输入不输出，知识永远不是你的。这三招的本质都是&quot;强制你输出&quot;——做题、讲给别人、复盘。输出才是学习的分水岭。</div></div>
+    </section>
+    <section class="slide" data-index="6">
+      <header class="slide-head">
+        <span class="slide-kicker">用 AI 十倍提升学习效率</span>
+        <span class="slide-num">06 / 07</span>
+      </header>
+      <h2 class="slide-title">真实效果：一周对比</h2>
+      <div class="slide-body"><ul><li class="lvl0"><span class="dot">•</span>概念理解：从"似懂非懂"到"能讲清楚"</li><li class="lvl0"><span class="dot">•</span>复习效率：整理笔记时间减少约 70%</li><li class="lvl0"><span class="dot">•</span>反馈速度：问题即时解答，不留死角</li></ul></div>
+      <div class="notes"><div class="notes-head">演讲词</div><div class="notes-body">演讲词：给一组我亲测的数据——用这套方法一周，笔记整理时间省了大约七成，最大的变化是：以前是&quot;看懂了&quot;，现在是&quot;讲得出&quot;。这就是输出带来的质变。</div></div>
+    </section>
+    <section class="slide" data-index="7">
+      <header class="slide-head">
+        <span class="slide-kicker">用 AI 十倍提升学习效率</span>
+        <span class="slide-num">07 / 07</span>
+      </header>
+      <h2 class="slide-title">从今天开始，做三件事</h2>
+      <div class="slide-body"><ul><li class="lvl0"><span class="dot">•</span>挑一个卡住你的概念，用费曼模板学一遍</li><li class="lvl0"><span class="dot">•</span>学完后写 200 字总结，并讲给 AI 听</li><li class="lvl0"><span class="dot">•</span>把模板分享给一个同学，一起用起来</li></ul></div>
+      <div class="notes"><div class="notes-head">演讲词</div><div class="notes-body">演讲词：别收藏了，现在就做。挑一个概念、写一段总结、分享给一个人——完成这三件事，今天的分享才算没白听。谢谢大家，欢迎交流。</div></div>
+    </section>
+
+<div id="progress"></div>
+<div id="counter"></div>
+<div id="hint">← → / 空格翻页 · S 演讲词 · F 全屏 · Home 回封面</div>
+
+<script>
+(function () {
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var total = slides.length;
+  var idx = 0;
+  var progress = document.getElementById('progress');
+  var counter = document.getElementById('counter');
+
+  function show(n) {
+    idx = (n + total) % total;
+    slides.forEach(function (s, i) { s.classList.toggle('active', i === idx); });
+    progress.style.width = ((idx + 1) / total * 100) + '%';
+    counter.textContent = (idx + 1) + ' / ' + total;
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); show(idx + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); show(idx - 1); }
+    else if (e.key === 'Home') { show(0); }
+    else if (e.key.toLowerCase() === 's') { document.body.classList.toggle('show-notes'); }
+    else if (e.key.toLowerCase() === 'f') {
+      if (!document.fullscreenElement) { document.documentElement.requestFullscreen(); }
+      else { document.exitFullscreen(); }
+    }
+  });
+
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('a, button, input, textarea, pre, code')) return;
+    if (e.clientX > window.innerWidth / 2) show(idx + 1);
+    else show(idx - 1);
+  });
+
+  show(0);
+})();
+</script>
+</body>
+</html>
